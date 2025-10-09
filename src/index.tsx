@@ -3,13 +3,22 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { StationProvider } from './services/stationserviceprovider';
+import {BrowserRouter} from "react-router-dom"
+
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 root.render(
+
   <React.StrictMode>
-    <App />
+   <StationProvider>
+    <BrowserRouter basename="/openpaths">
+      <App />
+    </BrowserRouter>
+      
+    </StationProvider>
   </React.StrictMode>
 );
 
