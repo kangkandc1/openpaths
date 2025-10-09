@@ -8,6 +8,7 @@ import { Footer } from './components/utilitycomponents/footer';
 import { MockHome } from './components/utilitycomponents/mockhome';
 import { Redirect, Route, Switch } from "react-router-dom/cjs/react-router-dom"
 import { LanndingPage } from './components/utilitycomponents/landingpage';
+import { MainEditor } from './components/maineditor'; 
 function App() {  
 
   const { getAllNodes, addNode,setStation, } = useStationContext();
@@ -17,11 +18,11 @@ function App() {
   console.log(getAllNodes())
 
 
-  setTimeout(() => {
+  /* setTimeout(() => {
     setStation(Schanz);
     console.log("After setting new station data")
-    console.log(getAllNodes())  
-}, 10000);
+    console.log(getAllNodes())
+  }, 10000); */
 
 
 
@@ -33,11 +34,11 @@ function App() {
       <main className="flex-grow-1">
         <Switch>
           <Route path="/" exact>
-            <Redirect to="/home" />
+            <Redirect to="/landing" />
           </Route>
 
           <Route path="/home" exact>
-            <MockHome />
+            <MainEditor></MainEditor>
           </Route>
 
           <Route path="/landing" exact>

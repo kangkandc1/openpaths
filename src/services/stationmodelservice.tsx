@@ -44,7 +44,7 @@ export class StationService {
     }
 
     getStationModel():StationModel{
-        return {nodes:this.nodeCollection,edges:this.edgeCollection}
+        return {nodes:this.nodeCollection,edges:this.edgeCollection,label:this.stationModel?.label,id:this.stationModel?.id}
     }
 
 

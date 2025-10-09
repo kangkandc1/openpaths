@@ -32,10 +32,10 @@ export const LanndingPage = () => {
         console.log("Selected station changed to ", selectedStation)
         if (selectedStation == "de:1") {
             setNodeCollection(aachen)
-            setCurrentStationModel({ nodes: aachen, edges: createEmptyEdgeCollection() })
+            setCurrentStationModel({ nodes: aachen, edges: createEmptyEdgeCollection(),label:"Aachen Hbf",id:"de:1" })
         } else if (selectedStation == "de:2") {
             setNodeCollection(Schanz)
-            setCurrentStationModel({ nodes: Schanz, edges: createEmptyEdgeCollection() })
+            setCurrentStationModel({ nodes: Schanz, edges: createEmptyEdgeCollection(),label:"Aachen Schanz",id:"de:2" })
         }
 
 

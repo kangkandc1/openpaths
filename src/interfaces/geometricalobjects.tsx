@@ -10,7 +10,9 @@ import { PathwayModes } from "./common"
     "properties": {
         name:string
         id:string|number
-        [key: string]: any  
+        [key: string]: any,
+        level?:number,
+        category?:string  
     }
 }
 
@@ -75,5 +77,7 @@ export interface GeojsonEdgeCollection {
 
 export interface StationModel {
     nodes:GeojsonNodeCollection,
-    edges:GeojsonEdgeCollection
+    edges:GeojsonEdgeCollection,
+    label:string,
+    id:string|number
 }

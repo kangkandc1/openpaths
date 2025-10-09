@@ -9,6 +9,15 @@ export enum PathwayModes {
 
 }
 
+
+export enum NodeTypes{
+    "GENERIC"="GENERIC",
+    "ENTRANCE_EXIT"="ENTRANCE_EXIT",
+    "PLATFORM"="PLATFORM",
+
+   
+}
+
 export interface PathwayLink{
     id:string|number
     isBirectional: boolean

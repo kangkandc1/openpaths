@@ -1,3 +1,4 @@
+import { NodeTypes } from "../interfaces/common";
 import { GeojsonNodeCollection } from "../interfaces/geometricalobjects";
 
 export const Schanz:GeojsonNodeCollection={
@@ -17,7 +18,9 @@ export const Schanz:GeojsonNodeCollection={
       "properties": {
        
         "name": "Generic_node 1",
-        "id":"de:generic_1"
+        "id":"de:generic_1",
+        "level":1,
+        "category":NodeTypes.GENERIC
       },
       
     },
@@ -33,7 +36,9 @@ export const Schanz:GeojsonNodeCollection={
       "properties": {
         
         "name": "generic_node_2",
-        "id":"de:generic_2"
+        "id":"de:generic_2",
+        "level":1,
+        "category":NodeTypes.GENERIC
       },
      
     },
@@ -50,7 +55,9 @@ export const Schanz:GeojsonNodeCollection={
       "properties": {
         
         "name": "gleis 1",
-        "id":"de_generic3"
+        "id":"de_generic3",
+        "level":1,
+        "category":NodeTypes.GENERIC
       }
      
     },
@@ -67,7 +74,9 @@ export const Schanz:GeojsonNodeCollection={
        
         "description": "Gleis 2",
         "name": "Gleis 2",
-        "id":"de_generic4"
+        "id":"de_generic4",
+        "level":1,
+        "category":NodeTypes.PLATFORM
       }
       
     },
@@ -84,7 +93,9 @@ export const Schanz:GeojsonNodeCollection={
       "properties": {
        
         "name": "Eingang Lütticher Str Süd",
-        "id":"de_generic5"
+        "id":"de_generic5",
+        "level":2,
+        "category":NodeTypes.ENTRANCE_EXIT
       }
       
     },
@@ -100,7 +111,9 @@ export const Schanz:GeojsonNodeCollection={
       "properties": {
         
         "name": "Einganz Lütticherstr Nord",
-        "id":"de_generic6"
+        "id":"de_generic6",
+        "level":2,
+        "category":NodeTypes.ENTRANCE_EXIT
       }
      
     },
@@ -116,7 +129,9 @@ export const Schanz:GeojsonNodeCollection={
       "properties": {
         
         "name": "Eingang Jakob Straße 1",
-        "id":"de:generic7"
+        "id":"de:generic7",
+        "level":0,
+        "category":NodeTypes.ENTRANCE_EXIT
       }
       
     },
@@ -132,7 +147,9 @@ export const Schanz:GeojsonNodeCollection={
       "properties": {
         
         "name": "Eingang_Jakob_str_1",
-        "id":"de_generic8"
+        "id":"de_generic8",
+        "level":0,
+        "category":NodeTypes.ENTRANCE_EXIT
       }
     
     }

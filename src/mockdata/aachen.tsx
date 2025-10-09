@@ -1,3 +1,4 @@
+import { NodeTypes } from "../interfaces/common";
 import { GeojsonFeatureCollection, GeojsonNodeCollection } from "../interfaces/geometricalobjects";
 
 export const aachen: GeojsonNodeCollection = {
@@ -14,7 +15,9 @@ export const aachen: GeojsonNodeCollection = {
             },
             "properties": {
                 "name": "generic_node_1",
-                "id": "de:node1"
+                "id": "de:node1",
+                "level":0,
+                "category":NodeTypes.GENERIC
             },
 
 
@@ -33,7 +36,9 @@ export const aachen: GeojsonNodeCollection = {
             "properties": {
 
                 "name": "generic_node_2",
-                "id": "de:node2"
+                "id": "de:node2",
+                "level":0,
+                "category":NodeTypes.GENERIC
             }
 
         },
@@ -49,7 +54,9 @@ export const aachen: GeojsonNodeCollection = {
             "properties": {
 
                 "name": "generic_node_3",
-                "id": "de:node3"
+                "id": "de:node3",
+                "level":0,
+                "category":NodeTypes.GENERIC
             }
 
         },
@@ -65,7 +72,9 @@ export const aachen: GeojsonNodeCollection = {
             "properties": {
 
                 "name": "Gleis_2",
-                "id": "de:node4"
+                "id": "de:node4",
+                "level":1,
+                "category":NodeTypes.PLATFORM
             }
 
         },
@@ -81,7 +90,9 @@ export const aachen: GeojsonNodeCollection = {
             "properties": {
 
                 "name": "Gleis_3",
-                "id": "de:node5"
+                "id": "de:node5",
+                "level":1,
+                "category":NodeTypes.PLATFORM
             }
 
         },
@@ -97,7 +108,9 @@ export const aachen: GeojsonNodeCollection = {
             "properties": {
 
                 "name": "Gleis_4",
-                "id": "de:node6"
+                "id": "de:node6",
+                "level":1,
+                "category":NodeTypes.PLATFORM
             }
         },
         {
@@ -112,7 +125,9 @@ export const aachen: GeojsonNodeCollection = {
             "properties": {
 
                 "name": "Gleis_5",
-                "id": "de:node7"
+                "id": "de:node7",
+                "level":1,
+                "category":NodeTypes.PLATFORM
             }
 
         },
@@ -127,7 +142,9 @@ export const aachen: GeojsonNodeCollection = {
             },
             "properties": {
                 "name": "Gleis_6",
-                "id": "de:node8"
+                "id": "de:node8",
+                "level":1,
+                "category":NodeTypes.PLATFORM
             }
 
         },
@@ -143,7 +160,9 @@ export const aachen: GeojsonNodeCollection = {
             },
             "properties": {
                 "name": "Gleis_7",
-                "id": "de:node9"
+                "id": "de:node9",
+                "level":1,
+                "category":NodeTypes.PLATFORM
             }
 
         },
@@ -159,7 +178,9 @@ export const aachen: GeojsonNodeCollection = {
             "properties": {
 
                 "name": "main_entrance",
-                "id": "de:node10"
+                "id": "de:node10",
+                "level":0,
+                "category":NodeTypes.ENTRANCE_EXIT
             }
 
         }
