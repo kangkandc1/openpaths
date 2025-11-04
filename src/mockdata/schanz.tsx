@@ -4,7 +4,7 @@ import { GeojsonNodeCollection } from "../interfaces/geometricalobjects";
 export const Schanz:GeojsonNodeCollection={
     
   "type": "FeatureCollection",
-  "Features": [
+  "features": [
    
     {
       "type": "Feature",

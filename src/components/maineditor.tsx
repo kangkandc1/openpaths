@@ -2,7 +2,7 @@ import { useEffect, useState, useContext } from "react";
 import { useStationContext } from "../services/stationserviceprovider";
 import { getStationCentroid } from "./utilities/geospatialutilities";
 import { assignColorToLevel } from "./utilities/mapdisplayutilities";
-import { GeojsonPoint } from "../interfaces/geometricalobjects";
+import { GeojsonPoint, GeojsonNodeCollection } from "../interfaces/geometricalobjects";
 import { RotatingLines } from "react-loader-spinner"
 import { MapComponent } from "./mapcomponent";
 export const MainEditor: React.FC = () => {
@@ -23,7 +23,7 @@ export const MainEditor: React.FC = () => {
 
     const coloredNodes = { "type": "FeatureCollection", "features": [] as GeojsonPoint[] };
 
-    getStationModel().nodes.Features.forEach((node) => {
+    getStationModel().nodes.features.forEach((node) => {
         const level = node.properties.level;
         const color = assignColorToLevel(level);
         const coloredNode = {
@@ -36,17 +36,33 @@ export const MainEditor: React.FC = () => {
         coloredNodes.features.push(coloredNode);
     });
 
-    console.log(coloredNodes);
+
+
+
+    const coloredNodesGeojson: GeojsonNodeCollection = {
+        type: "FeatureCollection",
+        features: coloredNodes.features,
+    };
+
+    const centroid = getStationCentroid(getStationModel().nodes);
+
+
+    const currentMapProps = {
+        coloredNodes: coloredNodesGeojson,
+        centroid: [centroid.lon, centroid.lat]
+    }
 
     return (
         <div className="container-fluid">
             <div className="row-mt-2">
-                <div className="col-md-4">
+                <div className="col-md-12">
                     <h2>You are modelling {getStationModel().label}</h2>
                 </div>
             </div>
 
-            {loading ? (
+            <div className="row-mt-2">
+                <div className="col-md-12">
+                    {loading ? (
                 <div className="d-flex justify-content-center align-items-center" style={{ height: '80vh' }}>
                     <RotatingLines
                         strokeColor="grey"
@@ -56,7 +72,13 @@ export const MainEditor: React.FC = () => {
                         visible={true}
                     />
                 </div>
-            ) : <MapComponent />}
+            ) : <MapComponent coloredNodes={coloredNodesGeojson}
+                centroid={[centroid.lon, centroid.lat]} />}
+                </div>
+                
+            </div>
+
+            
             {/* Main editor content goes here */}
         </div>
     );

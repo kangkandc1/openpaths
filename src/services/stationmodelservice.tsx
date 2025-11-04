@@ -49,7 +49,7 @@ export class StationService {
 
 
     getNodeById(id:IdType):Optional<GeojsonPoint>{
-       const searchedNode=this.nodeCollection.Features.filter((node:GeojsonPoint)=>{
+       const searchedNode=this.nodeCollection.features.filter((node:GeojsonPoint)=>{
             return node.properties.id==id
         })
 
@@ -74,7 +74,7 @@ export class StationService {
 
 
     removeNodeById(id:string|number):void{
-        this.nodeCollection.Features=this.nodeCollection.Features.filter((node:GeojsonPoint)=>{
+        this.nodeCollection.features=this.nodeCollection.features.filter((node:GeojsonPoint)=>{
             return node.properties.id!==id
         })
 
@@ -88,7 +88,7 @@ export class StationService {
     }
 
     addNode(node:GeojsonPoint):void{
-        this.nodeCollection.Features.push(node)
+        this.nodeCollection.features.push(node)
     }
 
     addEdge(edge:GeojsonLineString):void{

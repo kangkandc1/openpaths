@@ -57,7 +57,7 @@ export interface GeojsonFeatureCollection {
 
 export interface GeojsonNodeCollection {
     "type": string,
-    "Features": GeojsonPoint[]
+    "features": GeojsonPoint[]
 }
 
 

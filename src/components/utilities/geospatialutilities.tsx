@@ -1,5 +1,9 @@
 import { Point } from "mapbox-gl";
 import { GeojsonNodeCollection, GeojsonPoint, PointGeometry } from "../../interfaces/geometricalobjects";
+interface Centroid {
+    lat:number,
+    lon:number
+}
 export function findCenter(markers:PointGeometry[]) {
     let lat = 0;
     let lng = 0;
@@ -12,7 +16,9 @@ export function findCenter(markers:PointGeometry[]) {
     lat /= markers.length;
     lng /= markers.length;
 
-    return {lat: lat, lng: lng}
+    const centroid:Centroid={lat:lat,lon:lng}
+
+    return centroid
 }
 
 
@@ -21,7 +27,7 @@ export const getStationCentroid=(modelledPoints:GeojsonNodeCollection)=>{
 
     let markers: PointGeometry[] = []
 
-    modelledPoints.Features.map((e:GeojsonPoint)=>{
+    modelledPoints.features.map((e:GeojsonPoint)=>{
         markers.push(e.geometry)
     })
 

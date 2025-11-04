@@ -3,7 +3,7 @@ import { GeojsonFeatureCollection, GeojsonNodeCollection } from "../interfaces/g
 
 export const aachen: GeojsonNodeCollection = {
     "type": "FeatureCollection",
-    "Features": [
+    "features": [
         {
             "type": "Feature",
             "geometry": {

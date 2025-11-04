@@ -1,18 +1,97 @@
 import { useState,useEffect,useContext } from "react"
 import ReactMapGL, { Source, Layer, NavigationControl, Popup, Marker } from 'react-map-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
+import { GeojsonNodeCollection } from "../interfaces/geometricalobjects";
 
 const flexibleCircleLayer = {
     id: 'flexible-circle',
-    type: 'circle',
+    type: 'circle' as const,
 
     paint: {
         'circle-radius': 4,
-        'circle-color': ["get", "displayColor"]
+        'circle-color': ["get", "displayColor"] as any,
     }
 }
 
 const MAPBOX_TOKEN = 'pk.eyJ1Ijoia2FuZ2thbmRldiIsImEiOiJjbHgwMmQzbHgwZTg4MnFzZTRsb3d1M2JiIn0.yEH3HF9v9Qdm849tyvMq8Q';
 
-export const MapComponent=()=>{
-    return <div>Map Component</div>
+type MapComponentProps = {
+    coloredNodes: GeojsonNodeCollection;
+    centroid: [number, number];
+};
+
+export const MapComponent = ({ coloredNodes, centroid }: MapComponentProps) => {
+
+    const [popupInfo, setPopupInfo] = useState<{
+        longitude: number;
+        latitude: number;
+        title: string;
+    } | null>(null);
+
+    const handleClick = (event: any) => {
+        const feature = event.features?.[0];
+
+        console.log(feature);
+
+        if (feature && feature.layer.id === 'flexible-circle') {
+            setPopupInfo({
+                longitude: feature.geometry.coordinates[0],
+                latitude: feature.geometry.coordinates[1],
+                title: `Level ${feature.properties.level}`+`  ${feature.properties.name}`
+            });
+        }
+    };
+
+    const onMouseMove = (event: any) => {
+        const feature = event.features?.[0];
+        if (feature && feature.layer.id === 'flexible-circle') {
+            event.target.getCanvas().style.cursor = 'pointer';
+        }
+    };
+
+    const onMouseLeave = (event: any) => {
+        event.target.getCanvas().style.cursor = '';
+    };
+
+    console.log("colored nodes in map component", coloredNodes)
+    return (<ReactMapGL
+            initialViewState={{
+                latitude: centroid[1],
+                longitude: centroid[0],
+                zoom: 17
+            }}
+            style={{ width: '100%', height: '500px' }}
+            //style={dummyStateVariable ? { width: '100%', height: '500px' } : { width: '100%', height: '490px' }}
+            //mapStyle={(showSateliteFlag) ? 'mapbox://styles/mapbox/satellite-v9' : 'mapbox://styles/mapbox/streets-v12'}
+            mapStyle='mapbox://styles/kangkandev/cm4cerbkh01kk01sdbmmd5svx'
+            //mapStyle='mapbox://styles/mapbox/standard'
+            mapboxAccessToken={MAPBOX_TOKEN}
+            interactiveLayerIds={['flexible-circle']}
+            onClick={handleClick}
+            onMouseMove={onMouseMove}
+            onMouseLeave={onMouseLeave}
+            customAttribution={"LGL"}
+        >
+
+            <NavigationControl position="top-left" />
+            {coloredNodes && (
+                <Source id="nodes-source" type="geojson" data={coloredNodes}>
+                    <Layer {...flexibleCircleLayer} />
+                </Source>
+            )}
+
+            {popupInfo && (
+                <Popup
+                    longitude={popupInfo.longitude}
+                    latitude={popupInfo.latitude}
+                    onClose={() => setPopupInfo(null)}
+                    closeOnClick={false}
+                >
+                    <div>{popupInfo.title}</div>
+                </Popup>
+            )}
+            
+        </ReactMapGL>
+     
+    )
 }
