@@ -2,17 +2,19 @@ import { useEffect, useState, useContext } from "react";
 import { useStationContext } from "../services/stationserviceprovider";
 import { getStationCentroid } from "./utilities/geospatialutilities";
 import { assignColorToLevel } from "./utilities/mapdisplayutilities";
-import { GeojsonPoint, GeojsonNodeCollection } from "../interfaces/geometricalobjects";
+import { GeojsonPoint, GeojsonNodeCollection, GeojsonLineString } from "../interfaces/geometricalobjects";
 import { RotatingLines } from "react-loader-spinner"
 import { MapComponent } from "./mapcomponent";
+import { LinkCreator } from "./linkcreator";
 export const MainEditor: React.FC = () => {
 
 
-    const { collection, addNode, getAllNodes, setStation, setStationModel, getAllEdges, getStationModel } = useStationContext();
+    const { collection, addNode, addEdge, getAllNodes, setStation, setStationModel, getAllEdges, getStationModel } = useStationContext();
     const [egdesGeojson, setEdgesGeojson] = useState(getAllEdges());
     const [nodesGeojson, setNodesGeojson] = useState(getAllNodes());
     const [stationCentroid, setStationCentroid] = useState();
     const [loading, setLoading] = useState(true);
+    const [previewEdge, setPreviewEdge] = useState<GeojsonLineString | null>(null);
 
     console.log(getStationCentroid(getStationModel().nodes))
 
@@ -52,34 +54,57 @@ export const MainEditor: React.FC = () => {
         centroid: [centroid.lon, centroid.lat]
     }
 
+    const handleLinkPreview = (link: GeojsonLineString | null) => {
+        setPreviewEdge(link);
+    };
+
+    const handleLinkCreate = (link: GeojsonLineString) => {
+        // Add the edge using the StationService
+        addEdge(link);
+        setEdgesGeojson(getAllEdges());
+        setPreviewEdge(null);
+        console.log("Link created:", link);
+    };
+
     return (
         <div className="container-fluid">
-            <div className="row-mt-2">
+            <div className="row mt-2">
                 <div className="col-md-12">
                     <h2>You are modelling {getStationModel().label}</h2>
                 </div>
             </div>
 
-            <div className="row-mt-2">
-                <div className="col-md-12">
+            <div className="row mt-2">
+                <div className="col-md-8">
                     {loading ? (
-                <div className="d-flex justify-content-center align-items-center" style={{ height: '80vh' }}>
-                    <RotatingLines
-                        strokeColor="grey"
-                        strokeWidth="5"
-                        animationDuration="0.75"
-                        width="96"
-                        visible={true}
-                    />
+                        <div className="d-flex justify-content-center align-items-center" style={{ height: '80vh' }}>
+                            <RotatingLines
+                                strokeColor="grey"
+                                strokeWidth="5"
+                                animationDuration="0.75"
+                                width="96"
+                                visible={true}
+                            />
+                        </div>
+                    ) : (
+                        <MapComponent
+                            coloredNodes={coloredNodesGeojson}
+                            centroid={[centroid.lon, centroid.lat]}
+                            edges={egdesGeojson}
+                            previewEdge={previewEdge}
+                        />
+                    )}
                 </div>
-            ) : <MapComponent coloredNodes={coloredNodesGeojson}
-                centroid={[centroid.lon, centroid.lat]} />}
-                </div>
-                
-            </div>
 
-            
-            {/* Main editor content goes here */}
+                <div className="col-md-4">
+                    {!loading && (
+                        <LinkCreator
+                            onLinkPreview={handleLinkPreview}
+                            onLinkCreate={handleLinkCreate}
+                        />
+                    )}
+                </div>
+            </div>
         </div>
     );
 }

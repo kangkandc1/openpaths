@@ -1,7 +1,8 @@
 import { useState,useEffect,useContext } from "react"
 import ReactMapGL, { Source, Layer, NavigationControl, Popup, Marker } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { GeojsonNodeCollection } from "../interfaces/geometricalobjects";
+import { GeojsonNodeCollection, GeojsonLineString, GeojsonEdgeCollection } from "../interfaces/geometricalobjects";
+import { changeLinkGeometries } from "./utilities/curvedlineutilities";
 
 const flexibleCircleLayer = {
     id: 'flexible-circle',
@@ -13,20 +14,71 @@ const flexibleCircleLayer = {
     }
 }
 
+const edgeLineLayer = {
+    id: 'edge-lines',
+    type: 'line' as const,
+    paint: {
+        'line-color': '#3887be',
+        'line-width': 3,
+    }
+}
+
+const previewEdgeLineLayer = {
+    id: 'preview-edge-lines',
+    type: 'line' as const,
+    paint: {
+        'line-color': '#ff0000',
+        'line-width': 4,
+        'line-dasharray': [2, 2] as any,
+    }
+}
+
 const MAPBOX_TOKEN = 'pk.eyJ1Ijoia2FuZ2thbmRldiIsImEiOiJjbHgwMmQzbHgwZTg4MnFzZTRsb3d1M2JiIn0.yEH3HF9v9Qdm849tyvMq8Q';
 
 type MapComponentProps = {
     coloredNodes: GeojsonNodeCollection;
     centroid: [number, number];
+    edges?: GeojsonEdgeCollection;
+    previewEdge?: GeojsonLineString | null;
 };
 
-export const MapComponent = ({ coloredNodes, centroid }: MapComponentProps) => {
+export const MapComponent = ({ coloredNodes, centroid, edges, previewEdge }: MapComponentProps) => {
 
     const [popupInfo, setPopupInfo] = useState<{
         longitude: number;
         latitude: number;
         title: string;
     } | null>(null);
+
+    // Convert edges to GeoJSON format for Mapbox
+    // Apply curve transformation to handle overlapping edges
+    const edgesGeoJSON = edges ? (() => {
+        const transformedEdges = changeLinkGeometries(edges);
+        return {
+            type: "FeatureCollection",
+            features: transformedEdges.Features.map(edge => ({
+                type: "Feature",
+                geometry: {
+                    type: "LineString",
+                    coordinates: edge.geometry
+                },
+                properties: edge.properties
+            }))
+        };
+    })() : null;
+
+    // Convert preview edge to GeoJSON format
+    const previewEdgeGeoJSON = previewEdge ? {
+        type: "FeatureCollection",
+        features: [{
+            type: "Feature",
+            geometry: {
+                type: "LineString",
+                coordinates: previewEdge.geometry
+            },
+            properties: previewEdge.properties
+        }]
+    } : null;
 
     const handleClick = (event: any) => {
         const feature = event.features?.[0];
@@ -37,7 +89,7 @@ export const MapComponent = ({ coloredNodes, centroid }: MapComponentProps) => {
             setPopupInfo({
                 longitude: feature.geometry.coordinates[0],
                 latitude: feature.geometry.coordinates[1],
-                title: `Level ${feature.properties.level}`+`  ${feature.properties.name}`
+                title: `Level ${feature.properties.level}  ${feature.properties.name}`
             });
         }
     };
@@ -74,6 +126,22 @@ export const MapComponent = ({ coloredNodes, centroid }: MapComponentProps) => {
         >
 
             <NavigationControl position="top-left" />
+
+            {/* Render existing edges */}
+            {edgesGeoJSON && (
+                <Source id="edges-source" type="geojson" data={edgesGeoJSON}>
+                    <Layer {...edgeLineLayer} />
+                </Source>
+            )}
+
+            {/* Render preview edge */}
+            {previewEdgeGeoJSON && (
+                <Source id="preview-edge-source" type="geojson" data={previewEdgeGeoJSON}>
+                    <Layer {...previewEdgeLineLayer} />
+                </Source>
+            )}
+
+            {/* Render nodes on top of edges */}
             {coloredNodes && (
                 <Source id="nodes-source" type="geojson" data={coloredNodes}>
                     <Layer {...flexibleCircleLayer} />
@@ -90,8 +158,8 @@ export const MapComponent = ({ coloredNodes, centroid }: MapComponentProps) => {
                     <div>{popupInfo.title}</div>
                 </Popup>
             )}
-            
+
         </ReactMapGL>
-     
+
     )
 }

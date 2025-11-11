@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from "react";
-import { GeojsonPoint, GeojsonNodeCollection,StationModel, GeojsonEdgeCollection } from "../interfaces/geometricalobjects";
+import { GeojsonPoint, GeojsonNodeCollection,StationModel, GeojsonEdgeCollection, GeojsonLineString } from "../interfaces/geometricalobjects";
 import {StationService} from "./stationmodelservice"
 import { aachen } from "../mockdata/aachen";
 
@@ -8,7 +8,8 @@ const service = new StationService(aachen);
 interface StationContextValue {
   collection: GeojsonNodeCollection;
   addNode: (node: GeojsonPoint) => void;
-  
+  addEdge: (edge: GeojsonLineString) => void;
+
   getAllNodes: () => GeojsonNodeCollection;
 
   setStation:(statioNode:GeojsonNodeCollection)=>void;
@@ -28,6 +29,11 @@ export const StationProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const addNode = (node: GeojsonPoint): void => {
     service.addNode(node);
+    setCollection({ ...service.getCollection() }); // trigger re-render
+  };
+
+  const addEdge = (edge: GeojsonLineString): void => {
+    service.addEdge(edge);
     setCollection({ ...service.getCollection() }); // trigger re-render
   };
 
@@ -57,7 +63,7 @@ export const StationProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }
 
   return (
-    <StationContext.Provider value={{ collection, addNode, getAllNodes, setStation, setStationModel,getAllEdges,getStationModel }}>
+    <StationContext.Provider value={{ collection, addNode, addEdge, getAllNodes, setStation, setStationModel, getAllEdges, getStationModel }}>
       {children}
     </StationContext.Provider>
   );

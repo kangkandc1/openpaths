@@ -9,8 +9,9 @@ export const aachen: GeojsonNodeCollection = {
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    6.083611130714416,
-                    50.775278091430664
+                    6.091308301124099,
+                    
+                    50.76789307187172, 
                 ]
             },
             "properties": {
