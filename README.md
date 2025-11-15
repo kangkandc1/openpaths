@@ -1,46 +1,37 @@
-# Getting Started with Create React App
+# Background:
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This repository contains the frontend of the openpaths project. The openpaths project seeks to create software that support the following strategic goals:
 
-## Available Scripts
 
-In the project directory, you can run:
+1. Make it easier for Public Transport  Authorities (PTO's) to create, validate and visualize data related to the within station pedestrian navigation
+2. Make it easier to PTO's to assess the level of accessibility for mobility restricted users who need to use their stations
+3. Make it easier for PTO's to publish this data using open standards like GTFS and Transmodel/Netex.
+4. Make it easier for open data enthusiasts to assess the quality of accessibility for train stations using open data
+5. Incorporate data on indoor navigation while creating itineraries for mobilty restricted users with OpenTripPlanner
+6. Incorporate real time information about elevator outtages while creating itineraries
 
-### `npm start`
+### Status
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+The project is in the early phase. This frontend component here is intended as a proof of concept for goals 1 and 2. This will see active development within 2025.
+Goals 3 to 6 will see development in 2026.
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+### Running the frontend locally
 
-### `npm test`
+#### Prerequisities :  
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Node version 20.10 or higher
 
-### `npm run build`
+Step 1: clone the project with git clone https://github.com/kangkandc1/openpaths
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Step 2: navigate the direcory where the project was cloned into
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Step 2: npm install 
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Step 3: npm start
 
-### `npm run eject`
+This will launch the project in developer mode. 
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
 
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
