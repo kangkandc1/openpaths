@@ -11,17 +11,20 @@ interface DropdownOption {
     level?: number;
 }
 
-export const LinkCreator = ({ onLinkPreview, onLinkCreate }: {
+export const LinkCreator = ({ onLinkPreview, onLinkCreate, onNodeSelection }: {
     onLinkPreview: (link: GeojsonLineString | null) => void;
     onLinkCreate: (link: GeojsonLineString) => void;
+    onNodeSelection?: (startCoord: [number, number] | null, endCoord: [number, number] | null) => void;
 }) => {
     const { getStationModel, addNode, getAllNodes } = useStationContext();
 
     const [startNodeId, setStartNodeId] = useState<string | number | null>(null);
     const [startNodeName, setStartNodeName] = useState<string>('');
+    const [startNodeCoord, setStartNodeCoord] = useState<[number, number] | null>(null);
 
     const [endNodeId, setEndNodeId] = useState<string | number | null>(null);
     const [endNodeName, setEndNodeName] = useState<string>('');
+    const [endNodeCoord, setEndNodeCoord] = useState<[number, number] | null>(null);
 
     const [pathwayMode, setPathwayMode] = useState<PathwayModes | null>(null);
     const [pathwayModeName, setPathwayModeName] = useState<string>('');
@@ -30,6 +33,7 @@ export const LinkCreator = ({ onLinkPreview, onLinkCreate }: {
     const [distance, setDistance] = useState<number>(0);
 
     const [previewMode, setPreviewMode] = useState<boolean>(false);
+    const [startNodeLevel, setStartNodeLevel] = useState<number | undefined>(undefined);
 
     // Create dropdown options from nodes
     const createNodeDropdown = (): DropdownOption[] => {
@@ -40,6 +44,27 @@ export const LinkCreator = ({ onLinkPreview, onLinkCreate }: {
             coordinates: node.geometry.coordinates,
             level: node.properties.level
         }));
+    };
+
+    // Filter allowed destinations based on pathway mode and start node level
+    const getAllowedDestinations = (
+        allNodes: DropdownOption[],
+        startLevel: number | undefined,
+        mode: PathwayModes | null
+    ): DropdownOption[] => {
+        // If no start node or pathway mode selected, return all nodes
+        if (startLevel === undefined || mode === null) {
+            return allNodes;
+        }
+
+        // Walkway and Fare Gate: only same level allowed
+        if (mode === PathwayModes.Walkway || mode === PathwayModes["Fare Gate"]) {
+            return allNodes.filter(node => node.level === startLevel);
+        }
+
+        // All other modes (Stairs, Escalator, Elevator, Ramp, Moving sidewalk):
+        // only different levels allowed
+        return allNodes.filter(node => node.level !== startLevel);
     };
 
     // Pathway mode options
@@ -54,6 +79,7 @@ export const LinkCreator = ({ onLinkPreview, onLinkCreate }: {
     ];
 
     const nodeDropdown = createNodeDropdown();
+    const allowedEndNodes = getAllowedDestinations(nodeDropdown, startNodeLevel, pathwayMode);
 
     // Calculate distance between two coordinates (Haversine formula)
     const calculateDistance = (coord1: [number, number], coord2: [number, number]): number => {
@@ -108,12 +134,25 @@ export const LinkCreator = ({ onLinkPreview, onLinkCreate }: {
         if (option) {
             setStartNodeId(option.value);
             setStartNodeName(option.label);
+            setStartNodeLevel(option.level);
+            setStartNodeCoord(option.coordinates || null);
         } else {
             setStartNodeId(null);
             setStartNodeName('');
+            setStartNodeLevel(undefined);
+            setStartNodeCoord(null);
         }
+        // Clear end node selection when start node changes
+        setEndNodeId(null);
+        setEndNodeName('');
+        setEndNodeCoord(null);
         setPreviewMode(false);
         onLinkPreview(null);
+
+        // Notify parent of node selection
+        if (onNodeSelection) {
+            onNodeSelection(option?.coordinates || null, null);
+        }
     };
 
     // Handle end node selection
@@ -121,12 +160,19 @@ export const LinkCreator = ({ onLinkPreview, onLinkCreate }: {
         if (option) {
             setEndNodeId(option.value);
             setEndNodeName(option.label);
+            setEndNodeCoord(option.coordinates || null);
         } else {
             setEndNodeId(null);
             setEndNodeName('');
+            setEndNodeCoord(null);
         }
         setPreviewMode(false);
         onLinkPreview(null);
+
+        // Notify parent of node selection
+        if (onNodeSelection) {
+            onNodeSelection(startNodeCoord, option?.coordinates || null);
+        }
     };
 
     // Handle pathway mode selection
@@ -138,6 +184,9 @@ export const LinkCreator = ({ onLinkPreview, onLinkCreate }: {
             setPathwayMode(null);
             setPathwayModeName('');
         }
+        // Clear end node selection when pathway mode changes
+        setEndNodeId(null);
+        setEndNodeName('');
         setPreviewMode(false);
         onLinkPreview(null);
     };
@@ -174,14 +223,21 @@ export const LinkCreator = ({ onLinkPreview, onLinkCreate }: {
             // Clear form
             setStartNodeId(null);
             setStartNodeName('');
+            setStartNodeCoord(null);
             setEndNodeId(null);
             setEndNodeName('');
+            setEndNodeCoord(null);
             setPathwayMode(null);
             setPathwayModeName('');
             setDuration(0);
             setDistance(0);
             setPreviewMode(false);
             onLinkPreview(null);
+
+            // Clear crosshairs
+            if (onNodeSelection) {
+                onNodeSelection(null, null);
+            }
         }
     };
 
@@ -206,19 +262,6 @@ export const LinkCreator = ({ onLinkPreview, onLinkCreate }: {
                     <hr />
 
                     <div className="alert alert-info" role="alert">
-                        Select the end point of the edge
-                    </div>
-                    <Select
-                        placeholder="End point"
-                        isSearchable
-                        isClearable
-                        value={endNodeId ? { label: endNodeName, value: endNodeId } : null}
-                        options={nodeDropdown}
-                        onChange={handleEndNodeChange}
-                    />
-                    <hr />
-
-                    <div className="alert alert-info" role="alert">
                         Select pathway type
                     </div>
                     <Select
@@ -228,6 +271,24 @@ export const LinkCreator = ({ onLinkPreview, onLinkCreate }: {
                         value={pathwayMode !== null ? { label: pathwayModeName, value: pathwayMode } : null}
                         options={pathwayModeOptions}
                         onChange={handlePathwayModeChange}
+                        isDisabled={!startNodeId}
+                    />
+                    <hr />
+
+                    <div className="alert alert-info" role="alert">
+                        Select the end point of the edge
+                        {pathwayMode === PathwayModes.Walkway || pathwayMode === PathwayModes["Fare Gate"]
+                            ? " (same level only)"
+                            : pathwayMode !== null ? " (different level only)" : ""}
+                    </div>
+                    <Select
+                        placeholder="End point"
+                        isSearchable
+                        isClearable
+                        value={endNodeId ? { label: endNodeName, value: endNodeId } : null}
+                        options={allowedEndNodes}
+                        onChange={handleEndNodeChange}
+                        isDisabled={!startNodeId || pathwayMode === null}
                     />
                     <hr />
 

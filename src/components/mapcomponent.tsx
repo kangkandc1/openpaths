@@ -1,8 +1,10 @@
-import { useState,useEffect,useContext } from "react"
-import ReactMapGL, { Source, Layer, NavigationControl, Popup, Marker } from 'react-map-gl';
+import { useState,useEffect,useContext, useRef } from "react"
+import ReactMapGL, { Source, Layer, NavigationControl, Popup, Marker, MapRef } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { GeojsonNodeCollection, GeojsonLineString, GeojsonEdgeCollection } from "../interfaces/geometricalobjects";
 import { changeLinkGeometries } from "./utilities/curvedlineutilities";
+import { assignColorToPathwayMode } from "./utilities/mapdisplayutilities";
+import { addCrosshair, removeCrosshair } from "./utilities/crosshairutilities";
 
 const flexibleCircleLayer = {
     id: 'flexible-circle',
@@ -18,7 +20,7 @@ const edgeLineLayer = {
     id: 'edge-lines',
     type: 'line' as const,
     paint: {
-        'line-color': '#3887be',
+        'line-color': ["get", "edgeColor"] as any,
         'line-width': 3,
     }
 }
@@ -40,15 +42,23 @@ type MapComponentProps = {
     centroid: [number, number];
     edges?: GeojsonEdgeCollection;
     previewEdge?: GeojsonLineString | null;
+    startNodeCoord?: [number, number] | null;
+    endNodeCoord?: [number, number] | null;
+    onClearModel?: () => void;
+    hasLocalStorageModel?: boolean;
 };
 
-export const MapComponent = ({ coloredNodes, centroid, edges, previewEdge }: MapComponentProps) => {
+export const MapComponent = ({ coloredNodes, centroid, edges, previewEdge, startNodeCoord, endNodeCoord, onClearModel, hasLocalStorageModel }: MapComponentProps) => {
+
+    const mapRef = useRef<MapRef>(null);
 
     const [popupInfo, setPopupInfo] = useState<{
         longitude: number;
         latitude: number;
         title: string;
     } | null>(null);
+
+    const [showEdges, setShowEdges] = useState<boolean>(true);
 
     // Convert edges to GeoJSON format for Mapbox
     // Apply curve transformation to handle overlapping edges
@@ -62,7 +72,10 @@ export const MapComponent = ({ coloredNodes, centroid, edges, previewEdge }: Map
                     type: "LineString",
                     coordinates: edge.geometry
                 },
-                properties: edge.properties
+                properties: {
+                    ...edge.properties,
+                    edgeColor: assignColorToPathwayMode(edge.properties.mode)
+                }
             }))
         };
     })() : null;
@@ -105,61 +118,119 @@ export const MapComponent = ({ coloredNodes, centroid, edges, previewEdge }: Map
         event.target.getCanvas().style.cursor = '';
     };
 
+    // Effect to manage crosshairs
+    useEffect(() => {
+        const map = mapRef.current?.getMap();
+        if (!map) return;
+
+        // Wait for map to be fully loaded
+        if (!map.loaded()) {
+            map.on('load', () => {
+                updateCrosshairs(map);
+            });
+        } else {
+            updateCrosshairs(map);
+        }
+
+        function updateCrosshairs(map: any) {
+            // Add/update start node crosshair (red)
+            // Size parameter is in degrees - adjust this value for zoom levels 15-20
+            // Smaller value = smaller crosshair (try values like 0.00005 to 0.0001)
+            if (startNodeCoord) {
+                addCrosshair(map, 'start-crosshair', startNodeCoord, '#ff0000', 0.00005);
+            } else {
+                removeCrosshair(map, 'start-crosshair');
+            }
+
+            // Add/update end node crosshair (blue)
+            if (endNodeCoord) {
+                addCrosshair(map, 'end-crosshair', endNodeCoord, '#0000ff', 0.00005);
+            } else {
+                removeCrosshair(map, 'end-crosshair');
+            }
+        }
+    }, [startNodeCoord, endNodeCoord]);
+
     console.log("colored nodes in map component", coloredNodes)
-    return (<ReactMapGL
-            initialViewState={{
-                latitude: centroid[1],
-                longitude: centroid[0],
-                zoom: 17
-            }}
-            style={{ width: '100%', height: '500px' }}
-            //style={dummyStateVariable ? { width: '100%', height: '500px' } : { width: '100%', height: '490px' }}
-            //mapStyle={(showSateliteFlag) ? 'mapbox://styles/mapbox/satellite-v9' : 'mapbox://styles/mapbox/streets-v12'}
-            mapStyle='mapbox://styles/kangkandev/cm4cerbkh01kk01sdbmmd5svx'
-            //mapStyle='mapbox://styles/mapbox/standard'
-            mapboxAccessToken={MAPBOX_TOKEN}
-            interactiveLayerIds={['flexible-circle']}
-            onClick={handleClick}
-            onMouseMove={onMouseMove}
-            onMouseLeave={onMouseLeave}
-            customAttribution={"LGL"}
-        >
+    return (
+        <div>
+            <ReactMapGL
+                ref={mapRef}
+                initialViewState={{
+                    latitude: centroid[1],
+                    longitude: centroid[0],
+                    zoom: 17
+                }}
+                style={{ width: '100%', height: '500px' }}
+                //style={dummyStateVariable ? { width: '100%', height: '500px' } : { width: '100%', height: '490px' }}
+                //mapStyle={(showSateliteFlag) ? 'mapbox://styles/mapbox/satellite-v9' : 'mapbox://styles/mapbox/streets-v12'}
+                mapStyle='mapbox://styles/kangkandev/cm4cerbkh01kk01sdbmmd5svx'
+                //mapStyle='mapbox://styles/mapbox/standard'
+                mapboxAccessToken={MAPBOX_TOKEN}
+                interactiveLayerIds={['flexible-circle']}
+                onClick={handleClick}
+                onMouseMove={onMouseMove}
+                onMouseLeave={onMouseLeave}
+                customAttribution={"LGL"}
+            >
 
-            <NavigationControl position="top-left" />
+                <NavigationControl position="top-left" />
 
-            {/* Render existing edges */}
-            {edgesGeoJSON && (
-                <Source id="edges-source" type="geojson" data={edgesGeoJSON}>
-                    <Layer {...edgeLineLayer} />
-                </Source>
-            )}
+                {/* Render existing edges */}
+                {showEdges && edgesGeoJSON && (
+                    <Source id="edges-source" type="geojson" data={edgesGeoJSON}>
+                        <Layer {...edgeLineLayer} />
+                    </Source>
+                )}
 
-            {/* Render preview edge */}
-            {previewEdgeGeoJSON && (
-                <Source id="preview-edge-source" type="geojson" data={previewEdgeGeoJSON}>
-                    <Layer {...previewEdgeLineLayer} />
-                </Source>
-            )}
+                {/* Render preview edge */}
+                {previewEdgeGeoJSON && (
+                    <Source id="preview-edge-source" type="geojson" data={previewEdgeGeoJSON}>
+                        <Layer {...previewEdgeLineLayer} />
+                    </Source>
+                )}
 
-            {/* Render nodes on top of edges */}
-            {coloredNodes && (
-                <Source id="nodes-source" type="geojson" data={coloredNodes}>
-                    <Layer {...flexibleCircleLayer} />
-                </Source>
-            )}
+                {/* Render nodes on top of edges */}
+                {coloredNodes && (
+                    <Source id="nodes-source" type="geojson" data={coloredNodes}>
+                        <Layer {...flexibleCircleLayer} />
+                    </Source>
+                )}
 
-            {popupInfo && (
-                <Popup
-                    longitude={popupInfo.longitude}
-                    latitude={popupInfo.latitude}
-                    onClose={() => setPopupInfo(null)}
-                    closeOnClick={false}
+                {popupInfo && (
+                    <Popup
+                        longitude={popupInfo.longitude}
+                        latitude={popupInfo.latitude}
+                        onClose={() => setPopupInfo(null)}
+                        closeOnClick={false}
+                    >
+                        <div>{popupInfo.title}</div>
+                    </Popup>
+                )}
+
+            </ReactMapGL>
+
+            <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
+                <button
+                    className="btn btn-secondary"
+                    onClick={() => setShowEdges(!showEdges)}
                 >
-                    <div>{popupInfo.title}</div>
-                </Popup>
-            )}
+                    {showEdges ? 'Hide Edges' : 'Show Edges'}
+                </button>
 
-        </ReactMapGL>
-
+                {hasLocalStorageModel && onClearModel && (
+                    <button
+                        className="btn btn-danger"
+                        onClick={() => {
+                            if (window.confirm('Are you sure you want to clear the saved model? This will remove all edges and reset to a clean slate.')) {
+                                onClearModel();
+                            }
+                        }}
+                    >
+                        Clear Model
+                    </button>
+                )}
+            </div>
+        </div>
     )
 }

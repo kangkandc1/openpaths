@@ -19,6 +19,12 @@ interface StationContextValue {
   getAllEdges:()=>GeojsonEdgeCollection;
 
   getStationModel:()=>StationModel;
+
+  saveModelToLocalStorage: () => void;
+
+  clearModelFromLocalStorage: () => void;
+
+  hasLocalStorageModel: () => boolean;
 }
 
 const StationContext = createContext<StationContextValue | undefined>(undefined);
@@ -62,8 +68,42 @@ export const StationProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return service.getStationModel();
   }
 
+  const saveModelToLocalStorage = (): void => {
+    service.saveToLocalStorage();
+  }
+
+  const clearModelFromLocalStorage = (): void => {
+    const stationModel = service.getStationModel();
+    if (stationModel?.id) {
+      service.clearFromLocalStorage(stationModel.id);
+      // Manually reset edges without calling setStationModel (to avoid loading from localStorage again)
+      service.edgeCollection = { type: "FeatureCollection", Features: [] };
+      setCollection({ ...service.getCollection() }); // trigger re-render
+    }
+  }
+
+  const hasLocalStorageModel = (): boolean => {
+    const stationModel = service.getStationModel();
+    if (stationModel?.id) {
+      return service.hasLocalStorageModel(stationModel.id);
+    }
+    return false;
+  }
+
   return (
-    <StationContext.Provider value={{ collection, addNode, addEdge, getAllNodes, setStation, setStationModel, getAllEdges, getStationModel }}>
+    <StationContext.Provider value={{
+      collection,
+      addNode,
+      addEdge,
+      getAllNodes,
+      setStation,
+      setStationModel,
+      getAllEdges,
+      getStationModel,
+      saveModelToLocalStorage,
+      clearModelFromLocalStorage,
+      hasLocalStorageModel
+    }}>
       {children}
     </StationContext.Provider>
   );

@@ -8,23 +8,65 @@ import { GeojsonLineString, GeojsonEdgeCollection } from '../../interfaces/geome
  * @param total Total number of overlapping lines
  * @returns A new line with perturbed geometry
  */
-function createPerturbedLine(line: GeojsonLineString, index: number, total: number): any {
+
+function createPerturbedLine(
+    line: GeojsonLineString,
+    index: number,
+    total: number
+): GeojsonLineString {
     const coords = line.geometry;
+    const start = coords[0];
+    const end = coords[coords.length - 1];
 
-    const mid = turf.midpoint(coords[0], coords[coords.length - 1]);
-
-    // Use small angle to avoid overlapping; e.g. spread over 30 degrees
+    // Spread angle across all overlapping lines
     const angle = -15 + (30 / (total - 1)) * index;
-    const distance = 0.005; // tweak this for visual separation
 
-    const perturbed = turf.destination(mid, distance, angle, { units: 'kilometers' });
+    // Base offset (km). Tune manually.
+    const bulgeDist = 0.002;
 
-    const perturbedLine = {
+    // Compute length once
+    const lineLength = turf.distance(start, end, { units: "kilometers" });
+
+    // Interpolated raw positions along the straight segment
+    const oneThirdPoint = turf.along(
+        turf.lineString([start, end]),
+        lineLength / 3,
+        { units: "kilometers" }
+    );
+
+    const twoThirdPoint = turf.along(
+        turf.lineString([start, end]),
+        2 * lineLength / 3,
+        { units: "kilometers" }
+    );
+
+    // Offset both intermediate points sideways
+    const bulge1 = turf.destination(
+        oneThirdPoint,
+        bulgeDist,
+        angle,
+        { units: "kilometers" }
+    );
+
+    const bulge2 = turf.destination(
+        twoThirdPoint,
+        bulgeDist,
+        angle,
+        { units: "kilometers" }
+    );
+
+    // IMPORTANT: geometry must be [number, number][]
+    const newGeometry: [number, number][] = [
+        start,
+        bulge1.geometry.coordinates as [number, number],
+        bulge2.geometry.coordinates as [number, number],
+        end
+    ];
+
+    return {
         ...line,
-        geometry: [coords[0], perturbed.geometry.coordinates, coords[coords.length - 1]],
+        geometry: newGeometry
     };
-
-    return perturbedLine;
 }
 
 /**
@@ -135,7 +177,16 @@ function modifyLinkBundle(linkBundle: GeojsonLineString[]): GeojsonLineString[] 
     perturbedLines.forEach(element => {
         console.log(element.geometry);
         const curvedInput = turf.lineString(element.geometry);
-        const curvedLine = turf.bezierSpline(curvedInput, { resolution: 100 });
+        const curvedLine = turf.bezierSpline(curvedInput, { resolution: 100,sharpness:1 });
+
+        const splineCoords = curvedLine.geometry.coordinates as [number, number][];
+
+        // Append the original last point if it's not already the same
+        const lastOriginal = element.geometry[element.geometry.length - 1];
+        const lastSpline = splineCoords[splineCoords.length - 1];
+        if (lastOriginal[0] !== lastSpline[0] || lastOriginal[1] !== lastSpline[1]) {
+            splineCoords.push(lastOriginal);
+        }
 
         const thisSpline: GeojsonLineString = {
             ...element,

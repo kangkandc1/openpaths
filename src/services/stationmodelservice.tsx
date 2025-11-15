@@ -15,6 +15,91 @@ export class StationService {
         this.edgeCollection={type:"FeatureCollection",Features:[]}
     }
 
+    /**
+     * Generates a local storage key for a station model
+     */
+    private getStorageKey(stationId: string | number): string {
+        return `station_model_${stationId}`;
+    }
+
+    /**
+     * Saves the current station model to local storage
+     */
+    saveToLocalStorage(): void {
+        if (!this.stationModel?.id) {
+            console.error("Cannot save: Station model ID is not set", this.stationModel);
+            return;
+        }
+
+        const key = this.getStorageKey(this.stationModel.id);
+        const modelData = {
+            nodes: this.nodeCollection,
+            edges: this.edgeCollection,
+            label: this.stationModel.label,
+            id: this.stationModel.id,
+            savedAt: new Date().toISOString()
+        };
+
+        try {
+            localStorage.setItem(key, JSON.stringify(modelData));
+            console.log(`Station model saved to local storage: ${key}`, `Edges: ${this.edgeCollection.Features.length}`);
+        } catch (error) {
+            console.error("Error saving to local storage:", error);
+        }
+    }
+
+    /**
+     * Loads a station model from local storage if available
+     * Returns true if model was loaded, false otherwise
+     */
+    loadFromLocalStorage(stationId: string | number): boolean {
+        const key = this.getStorageKey(stationId);
+
+        try {
+            const savedData = localStorage.getItem(key);
+
+            if (savedData) {
+                const modelData = JSON.parse(savedData);
+                this.nodeCollection = modelData.nodes;
+                this.edgeCollection = modelData.edges;
+                this.stationModel = {
+                    nodes: modelData.nodes,
+                    edges: modelData.edges,
+                    label: modelData.label,
+                    id: modelData.id
+                };
+                console.log(`Station model loaded from local storage: ${key}`, modelData.savedAt);
+                return true;
+            }
+        } catch (error) {
+            console.error("Error loading from local storage:", error);
+        }
+
+        return false;
+    }
+
+    /**
+     * Clears the station model from local storage
+     */
+    clearFromLocalStorage(stationId: string | number): void {
+        const key = this.getStorageKey(stationId);
+
+        try {
+            localStorage.removeItem(key);
+            console.log(`Station model cleared from local storage: ${key}`);
+        } catch (error) {
+            console.error("Error clearing from local storage:", error);
+        }
+    }
+
+    /**
+     * Checks if a saved model exists in local storage
+     */
+    hasLocalStorageModel(stationId: string | number): boolean {
+        const key = this.getStorageKey(stationId);
+        return localStorage.getItem(key) !== null;
+    }
+
 
     setStation(nodeCollection:GeojsonNodeCollection){
         this.nodeCollection=nodeCollection;
@@ -24,10 +109,18 @@ export class StationService {
 
 
     setStationModel(stationModel:StationModel){
-        this.nodeCollection=stationModel.nodes;
-        this.edgeCollection=stationModel.edges;
-        this.stationModel=stationModel;
+        // Try to load from local storage first
+        const loaded = this.loadFromLocalStorage(stationModel.id);
 
+        if (loaded) {
+            console.log("Loaded existing model from local storage for station:", stationModel.id);
+        } else {
+            // Use the provided station model if nothing in local storage
+            this.nodeCollection=stationModel.nodes;
+            this.edgeCollection=stationModel.edges;
+            this.stationModel=stationModel;
+            console.log("Using fresh station model for station:", stationModel.id);
+        }
     }
 
     setStationId(stationId:IdType){
@@ -44,7 +137,17 @@ export class StationService {
     }
 
     getStationModel():StationModel{
-        return {nodes:this.nodeCollection,edges:this.edgeCollection,label:this.stationModel?.label,id:this.stationModel?.id}
+        // Ensure we return the complete model
+        if (!this.stationModel) {
+            console.warn("Station model is not initialized properly");
+            return {
+                nodes: this.nodeCollection,
+                edges: this.edgeCollection,
+                label: undefined,
+                id: undefined
+            };
+        }
+        return this.stationModel;
     }
 
 

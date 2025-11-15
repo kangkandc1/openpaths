@@ -6,21 +6,50 @@ import { GeojsonPoint, GeojsonNodeCollection, GeojsonLineString } from "../inter
 import { RotatingLines } from "react-loader-spinner"
 import { MapComponent } from "./mapcomponent";
 import { LinkCreator } from "./linkcreator";
+import { useHistory } from "react-router-dom";
+
 export const MainEditor: React.FC = () => {
 
-
-    const { collection, addNode, addEdge, getAllNodes, setStation, setStationModel, getAllEdges, getStationModel } = useStationContext();
+    const history = useHistory();
+    const { collection, addNode, addEdge, getAllNodes, setStation, setStationModel, getAllEdges, getStationModel, saveModelToLocalStorage, clearModelFromLocalStorage, hasLocalStorageModel } = useStationContext();
     const [egdesGeojson, setEdgesGeojson] = useState(getAllEdges());
     const [nodesGeojson, setNodesGeojson] = useState(getAllNodes());
     const [stationCentroid, setStationCentroid] = useState();
     const [loading, setLoading] = useState(true);
     const [previewEdge, setPreviewEdge] = useState<GeojsonLineString | null>(null);
+    const [startNodeCoord, setStartNodeCoord] = useState<[number, number] | null>(null);
+    const [endNodeCoord, setEndNodeCoord] = useState<[number, number] | null>(null);
 
     console.log(getStationCentroid(getStationModel().nodes))
 
+    console.log(getStationModel());
+
+    // Check if station model is properly initialized
     useEffect(() => {
+        const stationModel = getStationModel();
+        if (!stationModel?.id || !stationModel?.label) {
+            console.warn("Station model not initialized, redirecting to landing page");
+            history.push("/landing");
+            return;
+        }
+
         const t = setTimeout(() => setLoading(false), 2000); // 2 seconds
         return () => clearTimeout(t);
+    }, []);
+
+    // Warn user before page refresh to prevent data loss
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            e.preventDefault();
+            e.returnValue = ''; // Modern browsers require this
+            return ''; // Some browsers use the return value
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
     }, []);
 
     const coloredNodes = { "type": "FeatureCollection", "features": [] as GeojsonPoint[] };
@@ -66,11 +95,35 @@ export const MainEditor: React.FC = () => {
         console.log("Link created:", link);
     };
 
+    const handleNodeSelection = (startCoord: [number, number] | null, endCoord: [number, number] | null) => {
+        setStartNodeCoord(startCoord);
+        setEndNodeCoord(endCoord);
+    };
+
+    const handleSaveModel = () => {
+        saveModelToLocalStorage();
+        alert("Model saved to local storage!");
+    };
+
+    const handleClearModel = () => {
+        clearModelFromLocalStorage();
+        setEdgesGeojson(getAllEdges());
+        alert("Model cleared! Starting with a clean slate.");
+    };
+
     return (
         <div className="container-fluid">
             <div className="row mt-2">
                 <div className="col-md-12">
                     <h2>You are modelling {getStationModel().label}</h2>
+                </div>
+            </div>
+
+            <div className="row mt-2">
+                <div className="col-md-12">
+                    <button className="btn btn-success" onClick={handleSaveModel}>
+                        Save Model
+                    </button>
                 </div>
             </div>
 
@@ -92,6 +145,10 @@ export const MainEditor: React.FC = () => {
                             centroid={[centroid.lon, centroid.lat]}
                             edges={egdesGeojson}
                             previewEdge={previewEdge}
+                            startNodeCoord={startNodeCoord}
+                            endNodeCoord={endNodeCoord}
+                            onClearModel={handleClearModel}
+                            hasLocalStorageModel={hasLocalStorageModel()}
                         />
                     )}
                 </div>
@@ -101,6 +158,7 @@ export const MainEditor: React.FC = () => {
                         <LinkCreator
                             onLinkPreview={handleLinkPreview}
                             onLinkCreate={handleLinkCreate}
+                            onNodeSelection={handleNodeSelection}
                         />
                     )}
                 </div>
